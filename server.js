@@ -15,7 +15,8 @@ app.use(cors({
 app.use(bodyParser.json())
 app.use(cookieParser())
 
-
+app.use('/api',require('./routes/home/homeRoutes'))
+app.use('/api',require('./routes/home/customerAuthRoutes'))
 app.use('/api' , require('./routes/authRoutes'))
 app.use('/api',require('./routes/dashboard/categoryRoutes'))
 app.use('/api',require('./routes/dashboard/productRoutes'))

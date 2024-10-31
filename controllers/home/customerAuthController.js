@@ -6,6 +6,63 @@ const {createToken} = require('../../utiles/tokenCreate')
 
 class customerAuthController{
 
+    customer_get = async(req,res) => {
+
+    }
+
+    const update_customer = async (req, res) => {
+        const form = formidable();
+        form.parse(req, async (err, fields, files) => {
+            if (err) {
+                return responseReturn(res, 404, { error: 'Something went wrong' });
+            } else {
+                let { name, email, address, phoneNumber, method } = fields;
+                let { image } = files;
+                const { id } = req.params;
+    
+                // Clean up input data if needed
+                if (name) name = name.trim();
+                if (email) email = email.trim();
+    
+                try {
+                    let result = null;
+                    if (image) {
+                        cloudinary.config({
+                            cloud_name: process.env.CLOUD_NAME,
+                            api_key: process.env.API_KEY,
+                            api_secret: process.env.API_SECRET,
+                            secure: true
+                        });
+    
+                        result = await cloudinary.uploader.upload(image.filepath, { folder: 'customers' });
+                    }
+    
+                    // Prepare update data
+                    const updateData = {
+                        ...(name && { name }),
+                        ...(email && { email }),
+                        ...(address && { address }),
+                        ...(phoneNumber && { phoneNumber }),
+                        ...(method && { method })
+                    };
+    
+                    if (result) {
+                        updateData.image = result.url;
+                    }
+    
+                    const customer = await customerModel.findByIdAndUpdate(id, updateData, { new: true });
+                    if (!customer) {
+                        return responseReturn(res, 404, { error: 'Customer not found' });
+                    }
+    
+                    responseReturn(res, 200, { customer, message: 'Customer updated successfully' });
+                } catch (error) {
+                    responseReturn(res, 500, { error: 'Internal Server Error' });
+                }
+            }
+        });
+    }
+
     customer_register = async(req,res) => {
         const {name, email, password } = req.body
 
@@ -71,12 +128,12 @@ class customerAuthController{
     }
   // End Method
 
-  customer_logout = async(req, res) => {
-    res.cookie('customerToken',"",{
-        expires : new Date(Date.now())
-    })
-    responseReturn(res, 200,{ message :  'Logout Success'})
-  }
+    customer_logout = async(req, res) => {
+        res.cookie('customerToken',"",{
+            expires : new Date(Date.now())
+        })
+        responseReturn(res, 200,{ message :  'Logout Success'})
+    }
     // End Method
 
 }

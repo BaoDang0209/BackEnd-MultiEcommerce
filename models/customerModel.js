@@ -14,6 +14,18 @@ const customerSchema = new Schema({
         required : true,
         select: false
     },
+    image: {
+        type: String,
+        required : false,
+    },
+    address: {
+        type: String,
+        required : false,
+    },
+    phoneNumber: {
+        type: String,
+        required : false,
+    },
     method: {
         type: String,
         required : true

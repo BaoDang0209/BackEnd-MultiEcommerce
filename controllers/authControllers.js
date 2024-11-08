@@ -1,6 +1,5 @@
 const adminModel = require('../models/adminModel')
 const sellerModel = require('../models/sellerModel')
-const sellerCustomerModel  = require('../models/chat/sellerCustomerModel')
 const { responseReturn } = require('../utiles/response')
 const bcrpty = require('bcrypt')
 const { createToken } = require('../utiles/tokenCreate')
@@ -93,9 +92,6 @@ class authControllers{
                     method : 'menualy',
                     shopInfo: {}
                 })
-               await sellerCustomerModel.create({
-                     myId: seller.id
-               })
 
                const token = await createToken({ id : seller.id, role: seller.role })
                res.cookie('accessToken',token, {

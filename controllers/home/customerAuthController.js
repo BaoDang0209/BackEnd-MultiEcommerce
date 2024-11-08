@@ -1,7 +1,6 @@
 const customerModel = require('../../models/customerModel')
 const { responseReturn } = require('../../utiles/response')
 const bcrypt = require('bcrypt')
-const sellerCustomerModel = require('../../models/chat/sellerCustomerModel')
 const {createToken} = require('../../utiles/tokenCreate')
 
 class customerAuthController{
@@ -19,9 +18,6 @@ class customerAuthController{
                     email: email.trim(),
                     password: await bcrypt.hash(password, 10),
                     method: 'menualy'
-                })
-                await sellerCustomerModel.create({
-                    myId: createCustomer.id
                 })
                 const token = await createToken({
                     id : createCustomer.id,

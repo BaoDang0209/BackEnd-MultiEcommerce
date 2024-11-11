@@ -8,8 +8,8 @@ const { dbConnect } = require('./utiles/db')
 
 
 app.use(cors({
-    origin : ['http://localhost:3000'],
-    credentials : true
+    origin : ['http://localhost:3000','http://localhost:3001'],
+    credentials: true
 }))
 
 app.use(bodyParser.json())

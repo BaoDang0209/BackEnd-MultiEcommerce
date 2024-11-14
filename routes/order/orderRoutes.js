@@ -7,6 +7,9 @@ router.get('/home/customer/get-dashboard-data/:userId',orderController.get_dashb
 router.get('/home/coustomer/get-orders/:customerId/:status',orderController.get_orders)
 router.get('/home/coustomer/get-order-details/:orderId',orderController.get_order_details)
 
+router.post('/order/create-payment',orderController.create_payment)
+router.get('/order/confirm/:orderId',orderController.order_confirm)
+
 //Sellers
 router.get('/seller/orders/:sellerId',orderController.get_seller_orders)
 router.get('/seller/order/:orderId',orderController.get_seller_order)

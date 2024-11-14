@@ -30,7 +30,6 @@ class authControllers{
                 }
 
 
-
                  
             } else {
                 responseReturn(res,404,{error: "Email not Found"})

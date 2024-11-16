@@ -4,7 +4,6 @@ const bcrypt = require('bcrypt')
 const sellerCustomerModel = require('../../models/chat/sellerCustomerModel')
 const {createToken} = require('../../utiles/tokenCreate')
 const formidable = require("formidable")
-
 class customerAuthController{
     
     get_customer = async(req,res) => {
@@ -73,6 +72,35 @@ class customerAuthController{
         });
     }
     
+    update_password = async (req, res) => {
+        const { id } = req; 
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+    
+        try {
+            const user = await customerModel.findById(id).select('+password');
+    
+            if (!user) {
+                return responseReturn(res, 404, { error: 'User not found' });
+            }
+    
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return responseReturn(res, 400, { error: 'Current password is incorrect' });
+            }
+    
+            if (newPassword !== confirmPassword) {
+                return responseReturn(res, 400, { error: 'New password and confirm password do not match' });
+            }
+    
+            user.password = await bcrypt.hash(newPassword, 10);
+            await user.save();
+    
+            responseReturn(res, 200, { message: 'Password updated successfully' });
+        } catch (error) {
+            responseReturn(res, 500, { error: error.message });
+        }
+    };    
+
     customer_register = async(req,res) => {
         const {name, email, password } = req.body
 

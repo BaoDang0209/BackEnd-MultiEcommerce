@@ -2,9 +2,76 @@ const customerModel = require('../../models/customerModel')
 const { responseReturn } = require('../../utiles/response')
 const bcrypt = require('bcrypt')
 const {createToken} = require('../../utiles/tokenCreate')
+const formidable = require("formidable")
 
 class customerAuthController{
+    
+    get_customer = async(req,res) => {
+        const {Id} = req.params
+        try {
+            const customer = await customerModel.findById(Id)
+            responseReturn(res, 200,{ customer })
+        } catch (error) {
+            responseReturn(res, 500,{ error: error.message })
+        }
+    }
 
+    update_customer = async (req, res) => {
+        const form = formidable();
+        form.parse(req, async (err, fields, files) => {
+            if (err) {
+                responseReturn(res, 404, { error: 'Something went wrong' });
+            } else {
+                let { name, email, address, phoneNumber, method } = fields;
+                let { image } = files;
+                const { id } = req.params;
+    
+                // Trim input fields
+                name = name ? name.trim() : undefined;
+                email = email ? email.trim() : undefined;
+                address = address ? address.trim() : undefined;
+                phoneNumber = phoneNumber ? phoneNumber.trim() : undefined;
+                method = method ? method.trim() : undefined;
+    
+                try {
+                    let result = null;
+                    if (image) {
+                        // Configure Cloudinary
+                        cloudinary.config({
+                            cloud_name: process.env.cloud_name,
+                            api_key: process.env.api_key,
+                            api_secret: process.env.api_secret,
+                            secure: true
+                        });
+    
+                        // Upload image to Cloudinary
+                        result = await cloudinary.uploader.upload(image.filepath, { folder: 'customers' });
+                    }
+    
+                    // Create update data
+                    const updateData = {
+                        name,
+                        email,
+                        address,
+                        phoneNumber,
+                        method,
+                    };
+    
+                    if (result) {
+                        updateData.image = result.url;
+                    }
+    
+                    // Update the customer document
+                    const customer = await customerModel.findByIdAndUpdate(id, updateData, { new: true });
+                    responseReturn(res, 200, { customer, message: 'Customer updated successfully' });
+    
+                } catch (error) {
+                    responseReturn(res, 500, { error: 'Internal Server Error' });
+                }
+            }
+        });
+    }
+    
     customer_register = async(req,res) => {
         const {name, email, password } = req.body
 
@@ -67,12 +134,12 @@ class customerAuthController{
     }
   // End Method
 
-  customer_logout = async(req, res) => {
-    res.cookie('customerToken',"",{
-        expires : new Date(Date.now())
-    })
-    responseReturn(res, 200,{ message :  'Logout Success'})
-  }
+    customer_logout = async(req, res) => {
+        res.cookie('customerToken',"",{
+            expires : new Date(Date.now())
+        })
+        responseReturn(res, 200,{ message :  'Logout Success'})
+    }
     // End Method
 
 }

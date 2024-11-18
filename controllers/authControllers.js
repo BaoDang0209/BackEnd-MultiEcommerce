@@ -5,6 +5,7 @@ const bcrpty = require('bcrypt')
 const { createToken } = require('../utiles/tokenCreate')
 const cloudinary = require('cloudinary').v2
 const formidable = require("formidable")
+const customerModel = require('../models/customerModel')
 
 class authControllers{
    
@@ -40,8 +41,37 @@ class authControllers{
         }
  
     }
-    // End Method 
 
+    update_password = async (req, res) => {
+        const { id } = req; 
+        const { currentPassword, newPassword, confirmPassword } = req.body; 
+
+        try {
+            const user = await adminModel.findById(id).select('+password') || await sellerModel.findById(id).select('+password');
+            
+            if (!user) {
+                return responseReturn(res, 404, { error: 'User not found' });
+            }
+
+            const isMatch = await bcrpty.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return responseReturn(res, 400, { error: 'Current password is incorrect' });
+            }
+
+            if (newPassword !== confirmPassword) {
+                return responseReturn(res, 400, { error: 'New password and confirm password do not match' });
+            }
+
+            user.password = await bcrpty.hash(newPassword, 10);
+            await user.save();
+
+            responseReturn(res, 200, { message: 'Password updated successfully' });
+        } catch (error) {
+            responseReturn(res, 500, { error: error.message });
+        }
+    };
+
+    
 
     seller_login = async(req,res) => {
         const {email,password} = req.body
@@ -74,7 +104,6 @@ class authControllers{
         }
  
     }
-    // End Method 
 
 
     seller_register = async(req, res) => {

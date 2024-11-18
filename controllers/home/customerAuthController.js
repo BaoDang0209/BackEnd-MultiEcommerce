@@ -21,7 +21,7 @@ class customerAuthController{
             if (err) {
                 responseReturn(res, 404, { error: 'Something went wrong' });
             } else {
-                let { name, email, address, phoneNumber, method } = fields;
+                let { name, email, address, phoneNumber } = fields;
                 let { image } = files;
                 const { id } = req.params;
     
@@ -30,7 +30,6 @@ class customerAuthController{
                 email = email ? email.trim() : undefined;
                 address = address ? address.trim() : undefined;
                 phoneNumber = phoneNumber ? phoneNumber.trim() : undefined;
-                method = method ? method.trim() : undefined;
     
                 try {
                     let result = null;
@@ -53,7 +52,6 @@ class customerAuthController{
                         email,
                         address,
                         phoneNumber,
-                        method,
                     };
     
                     if (result) {

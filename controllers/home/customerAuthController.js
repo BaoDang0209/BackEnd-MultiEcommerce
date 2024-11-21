@@ -14,6 +14,17 @@ class customerAuthController{
             responseReturn(res, 500,{ error: error.message })
         }
     }
+    get_customers = async (req, res) => {
+        try {
+            const customers = await customerModel.find();
+    
+            responseReturn(res, 200, { customers, totalCustomer: customers.length });
+            
+        } catch (error) {
+            
+            responseReturn(res, 500, { error: error.message });
+        }
+    };
 
     update_customer = async (req, res) => {
         const form = formidable();

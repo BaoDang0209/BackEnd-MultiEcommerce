@@ -71,7 +71,7 @@ class customerAuthController{
             if (err) {
                 responseReturn(res, 404, { error: 'Something went wrong' });
             } else {
-                let { name, email, address, phoneNumber } = fields;
+                let { name, email, address, phoneNumber, gender } = fields;
                 let { image } = files;
                 const { id } = req.params;
     
@@ -80,7 +80,7 @@ class customerAuthController{
                 email = email ? email.trim() : undefined;
                 address = address ? address.trim() : undefined;
                 phoneNumber = phoneNumber ? phoneNumber.trim() : undefined;
-    
+                gender = gender ? gender.trim() : undefined;
                 try {
                     let result = null;
                     if (image) {
@@ -102,6 +102,7 @@ class customerAuthController{
                         email,
                         address,
                         phoneNumber,
+                        gender,
                     };
     
                     if (result) {
@@ -120,7 +121,7 @@ class customerAuthController{
     }
     
     update_password = async (req, res) => {
-        const { id } = req; 
+        const { id } = req.params; 
         const { currentPassword, newPassword, confirmPassword } = req.body;
     
         try {
@@ -160,13 +161,15 @@ class customerAuthController{
                     name: name.trim(),
                     email: email.trim(),
                     password: await bcrypt.hash(password, 10),
-                    method: 'menualy'
+                    method: 'menualy',
+                    status: 'active',
                 })
                 const token = await createToken({
                     id : createCustomer.id,
                     name: createCustomer.name,
                     email: createCustomer.email,
-                    method: createCustomer.method 
+                    method: createCustomer.method, 
+                    status: createCustomer.status
                 })
                 res.cookie('customerToken',token,{
                     expires : new Date(Date.now() + 7*24*60*60*1000 )
@@ -190,7 +193,8 @@ class customerAuthController{
                     id : customer.id,
                     name: customer.name,
                     email: customer.email,
-                    method: customer.method 
+                    method: customer.method, 
+                    status: customer.status
                 })
                 res.cookie('customerToken',token,{
                     expires : new Date(Date.now() + 7*24*60*60*1000 )

@@ -14,6 +14,10 @@ const customerSchema = new Schema({
         required : true,
         select: false
     },
+    gender: {
+        type: String,
+        required : true
+    },
     image: {
         type: String,
         required : false,
@@ -25,6 +29,10 @@ const customerSchema = new Schema({
     phoneNumber: {
         type: String,
         required : false,
+    },
+    status: {
+        type: String,
+        required : true
     },
     method: {
         type: String,

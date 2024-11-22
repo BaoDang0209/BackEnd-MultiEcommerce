@@ -10,7 +10,7 @@ router.put('/customer-update/:id', authMiddleware, customerAuthController.update
 
 router.post('/customer/customer-register',customerAuthController.customer_register)
 
-router.put('/update-password/:id', authMiddleware, customerAuthController.update_password)
+router.put('/update-password/:id', customerAuthController.update_password)
 
 router.post('/customer/customer-login',customerAuthController.customer_login)
 

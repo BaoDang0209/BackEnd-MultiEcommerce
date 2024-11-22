@@ -23,6 +23,7 @@
     "jsonwebtoken": "^9.0.2",
     "moment": "^2.30.1",
     "mongoose": "^8.6.1",
+    "openai": "^4.73.0",
     "parser": "^0.1.4",
     "stripe": "^16.10.0",
     "uuid": "^10.0.0"

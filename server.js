@@ -25,6 +25,7 @@ app.use('/api',require('./routes/dashboard/productRoutes'))
 app.use('/api',require('./routes/dashboard/sellerRoutes'))
 app.use('/api',require('./routes/paymentRoutes'))
 app.use('/api',require('./routes/dashboard/dashboardRoutes'))
+app.use('/api', require('./routes/chatbotRoutes'))
 
 
 

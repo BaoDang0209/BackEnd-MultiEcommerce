@@ -79,41 +79,40 @@ Câu hỏi của người dùng: "${userMessage}"
     return response2.choices[0].message.content.trim();
 }
 // Function to execute the generated MongoDB query
+// Function to execute the generated MongoDB query
 async function executeMongoQuery(queryString) {
     try {
         console.log("Generated Query String:", queryString);
 
-        // Regex để tìm điều kiện liên quan đến category
+        // Regex to find the category condition
         const matchCategoryRegex = /{ category: \{ \$regex: [^}]*\} }/;
 
-        // Tìm điều kiện category
+        // Find category condition
         const categoryMatch = queryString.match(matchCategoryRegex);
-
         console.log("============================================");
-        console.log("Tìm thấy category:", categoryMatch);
+        console.log("Found category:", categoryMatch);
         console.log("============================================");
 
-        // Nếu tìm thấy điều kiện category
+        // Extract category match if found
         let extractedCategoryMatch = null;
         if (categoryMatch && categoryMatch.length > 0) {
-            const extractedCategoryMatch = { $match: categoryMatch[0] };
-
+            extractedCategoryMatch = JSON.parse(categoryMatch[0]);
         }
 
-        console.log("Điều kiện category đã tách:", extractedCategoryMatch);
+        console.log("Extracted category condition:", extractedCategoryMatch);
 
-        // Kiểm tra định dạng pipeline
+        // Check if the query string is in valid format
         if (!queryString.startsWith('[') || !queryString.endsWith(']')) {
             throw new Error('Invalid query format: Must be a valid Aggregation pipeline array.');
         }
 
-        // Parse Aggregation pipeline
-        const pipeline = eval(queryString);
+        // Parse Aggregation pipeline safely
+        const pipeline = JSON.parse(queryString);
         if (!Array.isArray(pipeline)) {
             throw new Error('Invalid query format: Expected an array.');
         }
 
-        // Thực thi Aggregation query
+        // Execute Aggregation query
         const results = await Product.aggregate(pipeline);
     
         return { results, extractedCategoryMatch };
@@ -123,13 +122,6 @@ async function executeMongoQuery(queryString) {
     }
 }
 
-
-
-
-
-
-
-// Handle chatbot request
 // Handle chatbot request
 async function handleChatRequest(req, res) {
     try {
@@ -146,21 +138,16 @@ async function handleChatRequest(req, res) {
         let queryResults = await executeMongoQuery(aggregationPipeline);
 
         console.log("============================================");
-        console.log("Kết quả truy vấn ban đầu:");
+        console.log("Initial query results:");
         console.log(queryResults.results);
         console.log("============================================");
 
-        // Nếu kết quả rỗng, sử dụng extractedCategoryMatch
+        // If results are empty, use extracted category match
         if (queryResults.results.length === 0 && queryResults.extractedCategoryMatch) {
-            console.log("Kết quả rỗng, sử dụng truy vấn điều kiện category thay thế...");
-        
-            // Chuyển đổi chuỗi truy vấn sang đối tượng JavaScript
-            const fallbackPipeline = [
-                { $match: queryResults.extractedCategoryMatch.$match },
-                { $limit: 10 } // Giới hạn số lượng kết quả trả về
-            ];
-            
-        
+            console.log("Empty results, using fallback category query...");
+
+            const fallbackPipeline = [queryResults.extractedCategoryMatch];
+
             const fallbackResults = await Product.aggregate(fallbackPipeline);
         
             return res.json({
@@ -170,7 +157,7 @@ async function handleChatRequest(req, res) {
             });
         }
         
-        // Trả về kết quả ban đầu nếu không rỗng
+        // Return initial results if not empty
         res.json({
             response: aggregationPipeline,
             results: queryResults.results,
@@ -181,7 +168,5 @@ async function handleChatRequest(req, res) {
         res.status(500).json({ error: 'An error occurred processing the request.' });
     }
 }
-
-
 
 module.exports = { handleChatRequest };

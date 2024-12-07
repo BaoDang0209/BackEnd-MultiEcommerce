@@ -4,6 +4,24 @@ const bcrypt = require('bcrypt')
 const {createToken} = require('../../utiles/tokenCreate')
 const formidable = require("formidable")
 class customerAuthController{
+
+    request_customer_get = async (req, res) => {
+        const {page,searchValue, parPage} = req.query 
+        const skipPage = parseInt(parPage) * (parseInt(page) - 1)
+
+        try {
+            if (searchValue) {
+                
+            } else {
+                const customers = await customerModel.find({ status:  'pending'}).skip(skipPage).limit(parPage).sort({ createdAt: -1})
+                const totalCustomer = await customerModel.find({ status: 'pending' }).countDocuments()
+                responseReturn(res, 200,{ customers,totalCustomer })
+            }
+        } catch (error) {
+            responseReturn(res, 500,{ error: error.message }) 
+        }
+ 
+    }
     
     get_customer = async(req,res) => {
         const {Id} = req.params
@@ -14,6 +32,39 @@ class customerAuthController{
             responseReturn(res, 500,{ error: error.message })
         }
     }
+
+    get_customers = async (req, res) => {
+        let {page,searchValue,parPage} = req.query
+        page = parseInt(page)
+        parPage= parseInt(parPage)
+
+        const skipPage = parPage * (page - 1)
+
+        try {
+            if (searchValue) {
+                const customers = await customerModel.find({
+                    $text: { $search: searchValue},
+                    method: 'menualy'
+                }).skip(skipPage).limit(parPage).sort({createdAt : -1})
+
+                const totalCustomer = await customerModel.find({
+                    $text: { $search: searchValue},
+                    method: 'menualy'
+                }).countDocuments()
+                responseReturn(res, 200, {totalCustomer,customers})
+            } else {
+                const customers = await customerModel.find({ method: 'menualy'
+                }).skip(skipPage).limit(parPage).sort({createdAt : -1})
+
+                const totalCustomer = await customerModel.find({ method: 'menualy'
+                }).countDocuments()
+                responseReturn(res, 200, {totalCustomer,customers})
+            }
+            
+        } catch (error) {
+            console.log('active seller get ' + error.message)
+        }
+    };
 
     update_customer = async (req, res) => {
         const form = formidable();

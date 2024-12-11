@@ -3,10 +3,10 @@ const { authMiddleware } = require('../../middlewares/authMiddleware')
 const router = require('express').Router()
 
 router.get('/get-customer/:Id', customerAuthController.get_customer)
-router.get('/get-customers' , authMiddleware, customerAuthController.get_customers)
-router.get('/request-customer-get', authMiddleware, customerAuthController.request_customer_get)
+router.get('/get-customers' , customerAuthController.get_customers)
+router.get('/request-customer-get', customerAuthController.request_customer_get)
 
-router.put('/customer-update/:id', authMiddleware, customerAuthController.update_customer)
+router.put('/customer-update/:id', customerAuthController.update_customer)
 
 router.post('/customer/customer-register',customerAuthController.customer_register)
 

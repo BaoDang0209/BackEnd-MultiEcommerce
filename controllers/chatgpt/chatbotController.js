@@ -3,13 +3,13 @@ const Product = require('../../models/productModel');
 
 // Initialize OpenAI API
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.PERPLEXITY_API_KEY,
+    baseURL: 'https://api.perplexity.ai'
 });
 
 // Function to generate MongoDB query from AI response
 async function generateChatGPTResponse(userMessage) {
-    const promptTemplate =
-        `
+    const promptTemplate = `
     You are an AI assistant that generates **valid Mongoose MongoDB aggregation queries** based on user questions.
     The Product schema has the following fields: name, slug, category, brand, price, stock, discount, rating.
 
@@ -28,11 +28,10 @@ async function generateChatGPTResponse(userMessage) {
     ]
 
     User Question: "${userMessage}"
-    `
-        ;
+    `;
 
     const response = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
+        model: 'sonar', // hoặc thử các model hợp lệ khác
         temperature: 0,
         messages: [
             { role: 'system', content: 'You generate precise MongoDB aggregation queries for product searches.' },
@@ -43,9 +42,13 @@ async function generateChatGPTResponse(userMessage) {
     return response.choices[0].message.content.trim();
 }
 
-
 // Function to generate an OpenAI response for fallback
 async function generateChatGPTResponse2(userMessage, products) {
+    // Nếu không tìm thấy sản phẩm, chỉ trả về thông báo
+    if (!products || products.length === 0) {
+        return "Sorry, I can't find them.";
+    }
+
     const promptTemplate2 = `
 Bạn là một trợ lý AI tư vấn sản phẩm cho khách hàng. Dưới đây là danh sách các sản phẩm hiện có trong cửa hàng của chúng tôi:
 
@@ -58,36 +61,30 @@ ${products.map(product => `
 - Giảm giá: ${product.discount}%
 - Số lượng còn: ${product.stock}
 - Đánh giá: ${product.rating} sao
-- Đường link: http://localhost:3000/product/details/${product.slug}
 -----------------------------`).join('\n')}
-đồng thời ngoài các trường name, slug, category, brand, price, stock, discount, rating. 
+đồng thời ngoài các trường name, slug, category, brand, price, stock, discount, rating.
 
 Câu hỏi của người dùng: "${userMessage}"
+`;
 
-`
-        ;
-
-
-        // Bạn nên tham khảo nguồn bên ngoài để đưa ra đánh giá cũng như yêu cầu của khách hàng tốt nhất. Nhưng chỉ quanh những sản phẩm có trong cửa hàng.
     const response2 = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
+        model: 'sonar', // hoặc thử model khác
         temperature: 0.7,
         messages: [
             { role: 'system', content: 'Bạn là một trợ lý AI chuyên tư vấn sản phẩm, chỉ trả lời thông tin có trong cơ sở dữ liệu, ' },
             { role: 'user', content: promptTemplate2 },
         ],
-
     });
 
     return response2.choices[0].message.content.trim();
 }
+
 async function executeMongoQuery(queryString) {
     try {
         console.log("Generated Query String:", queryString);
 
         // Regex để tìm điều kiện liên quan đến category
         const matchCategoryRegex = /{ category: \{ \$regex: [^}]*\} }/;
-
         // Tìm điều kiện category
         const categoryMatch = queryString.match(matchCategoryRegex);
 
@@ -126,12 +123,6 @@ async function executeMongoQuery(queryString) {
     }
 }
 
-
-
-
-
-
-
 // Handle chatbot request
 async function handleChatRequest(req, res) {
     try {
@@ -152,47 +143,18 @@ async function handleChatRequest(req, res) {
         console.log(queryResults.results);
         console.log("============================================");
 
-        // Nếu kết quả rỗng, sử dụng extractedCategoryMatch
-        if (queryResults.results.length === 0 && queryResults.extractedCategoryMatch) {
-            console.log("Kết quả rỗng, sử dụng truy vấn điều kiện category thay thế...");
-
-            const categoryRegex = /\/([^/]+)\//;
-            const categoryMatch = queryResults.extractedCategoryMatch.match(categoryRegex);
-
-            let category = null; // Default fallback
-            if (categoryMatch && categoryMatch[1]) {
-                category = categoryMatch[1];
-            }
-
-            const fallbackPipeline = [
-                {
-                    $match: {
-                        category: {
-                            $regex: new RegExp(category, 'i')
-                        }
-                    }
-                }
-            ];
-            console.log("fallbackPipeline", fallbackPipeline);
-
-            const fallbackResults = await Product.aggregate(fallbackPipeline);
-            console.log("fallbackResults", fallbackResults)
-
-            const aggregationPipeline2 = await generateChatGPTResponse2(userMessage, fallbackResults);
-            console.log("aggregationPipeline", aggregationPipeline2)
-
-            console.log(aggregationPipeline2)
-
+        // Nếu không tìm thấy sản phẩm phù hợp trong database
+        if (!queryResults.results || queryResults.results.length === 0) {
+            // Có thể cố gắng truy vấn fallback category, nếu dùng - hoặc trả lời luôn
+            const fallbackMsg = await generateChatGPTResponse2(userMessage, []);
             return res.json({
-                response2: aggregationPipeline,
-                results2: fallbackResults,
+                results: [],
                 fallbackUsed: true,
-                final_result_chat: aggregationPipeline2
+                final_result_chat: fallbackMsg
             });
-        }
-        else {
+        } else {
+            // Có sản phẩm phù hợp
             const aggregationPipeline2 = await generateChatGPTResponse2(userMessage, queryResults.results);
-            // Trả về kết quả ban đầu nếu không rỗng
             res.json({
                 response: aggregationPipeline,
                 results: queryResults.results,
@@ -205,7 +167,5 @@ async function handleChatRequest(req, res) {
         res.status(500).json({ error: 'An error occurred processing the request.' });
     }
 }
-
-
 
 module.exports = { handleChatRequest };

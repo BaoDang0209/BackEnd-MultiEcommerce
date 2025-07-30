@@ -30,6 +30,6 @@ app.use('/api', require('./routes/chatbotRoutes'))
 
 
 app.get('/',(req,res) => res.send('Hello Server'))
-const port = process.env.PORT
+const port = process.env.PORT || 5000;
 dbConnect()
 app.listen(port, () => console.log(`Server is running on port ${port}`))
